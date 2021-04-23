@@ -82,9 +82,9 @@ void printBuf(uint8_t* buffer, uint16_t len){
 #if defined(PZEM004_SOFTSERIAL)
 PZEM004Tv30::PZEM004Tv30(uint8_t receivePin, uint8_t transmitPin, uint8_t addr)
 {
-    SoftwareSerial *port = new SoftwareSerial(receivePin, transmitPin);
-    port->begin(PZEM_BAUD_RATE);
-    this->_serial = port;
+    SoftwareSerial *swserial = new SoftwareSerial(receivePin, transmitPin);
+    swserial->begin(PZEM_BAUD_RATE);
+    this->_serial = swserial;
     this->_isSoft = true;
     init(addr);
 }
@@ -106,6 +106,25 @@ PZEM004Tv30::PZEM004Tv30(HardwareSerial* port, uint8_t addr)
     init(addr);
 }
 
+#ifdef ESP32
+/*!
+ * PZEM004Tv30::PZEM004Tv30
+ *
+ * Hardware serial constructor with custom pin mapping (esp32)
+ *
+ * @param port Hardware serial to use
+ * @param rxpin gpio pin to map rx
+ * @param txpin gpio pin to map tx
+ * @param addr Slave address of device
+ */
+PZEM004Tv30::PZEM004Tv30(HardwareSerial* port, uint8_t rxpin, uint8_t txpin, uint8_t addr){
+    port->begin(PZEM_BAUD_RATE, SERIAL_8N1, rxpin, txpin);
+    this->_serial = port;
+    this->_isSoft = false;
+    init(addr);
+}
+#endif
+
 /*!
  * PZEM004Tv30::~PZEM004Tv30
  *
@@ -114,8 +133,10 @@ PZEM004Tv30::PZEM004Tv30(HardwareSerial* port, uint8_t addr)
 */
 PZEM004Tv30::~PZEM004Tv30()
 {
+#ifdef PZEM004_SOFTSERIAL
     if(_isSoft)
-        delete this->_serial;
+        delete swserial;
+#endif
 }
 
 /*!
